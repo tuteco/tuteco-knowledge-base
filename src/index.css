@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --color-primary-100: 79deg 95% 98%;
+        --color-primary-200: 67deg 96% 38%;
+        --color-primary-300: 67deg 96% 32%;
+        --color-primary-400: 79deg 95% 10%;
+    }
+
+    @font-face {
+        font-family: 'Inter';
+        src: url('./assets/font/Inter.ttf') format('truetype');
+        font-style: normal;
+        font-weight: 100 900;
+    }
+
+    @font-face {
+        font-family: 'Inter';
+        src: url('./assets/font/Inter-Italic.ttf') format('truetype');
+        font-style: italic;
+        font-weight: 100 900;
+    }
+
+    html {
+        font-family: 'Inter', sans-serif;
+        font-optical-sizing: auto;
+    }
+}
+
+
