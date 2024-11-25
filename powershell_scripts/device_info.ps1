@@ -1,12 +1,19 @@
-function Out-MarkdownList {
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$OutputBasePath
+)
+
+
+function Out-JsonFile {
     param (
         [Parameter(Mandatory = $true)]
         [string]$Category,
         [object]$Data
     )
 
-    return $Data | ForEach-Object { "`n- __" + $Category + "__`n" + 
-    ($_.PSObject.Properties | ForEach-Object { "`n- __" + $Category + " " + $_.Name + ":__ " + $_.Value }) }
+    $filename = $Category + '.json'
+    $fullPath = Join-Path -Path $OutputBasePath -ChildPath $filename
+    $Data | ConvertTo-Json -Depth 5 | Out-File $fullPath
 }
 
 function Convert-BytesToGB {
@@ -18,65 +25,36 @@ function Convert-BytesToGB {
     return [math]::Round($Bytes / (1024 * 1024 * 1024), 2)
 }
 
-# OS
-$attributes = @('Caption', 'OSArchitecture', 'NumberOfUsers')
-$data = Get-CimInstance -ClassName Win32_OperatingSystem | Select-Object $attributes
-$os = Out-MarkdownList -Category "OS" -Data $data
-
-# Processor
-$attributes = @('Role', 'Name', 'NumberOfEnabledCore', 'NumberOfLogicalProcessors', 'ThreadCount', 'VMMonitorModeExtensions', 'VirtualizationFirmwareEnabled', 'ProcessorId')
-$data = Get-CimInstance -ClassName Win32_Processor | Select-Object $attributes
-$processor = Out-MarkdownList -Category "Prozessor" -Data $data
-
-# Memory
-$attributes = @(@{Name = 'TotalPhysicalMemory GB'; Expression = {Convert-BytesToGB $_.TotalPhysicalMemory}})
-$data = Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object $attributes
-$custom = [PSCustomObject]@{
-    Count = (Get-CimInstance -ClassName Win32_PhysicalMemory).count
-    "TotalPhysicalMemory GB" = $data."TotalPhysicalMemory GB"
-}
-$memory = Out-MarkdownList -Category "Memory" -Data $custom
+# Computer
+$attributes = @('CsName', 'CsDNSHostName', 'CsDomain', 'CsNetworkAdapters', 
+    'CsNumberOfLogicalProcessors', 'CsNumberOfProcessors', 'CsProcessors',
+    'CsStatus', 'CsSystemFamily', 'CsSystemSKUNumber', 'CsSystemType', 
+    @{Name = 'CsTotalPhysicalMemory GB'; Expression = { Convert-BytesToGB $_.CsTotalPhysicalMemory } },
+    'OsName', 'OsVersion', 'OsManufacturer', 'OsNumberOfUsers', 'OsArchitecture', 'OsLocale', 'OsStatus', 
+    'HyperVisorPresent',
+    'HyperVRequirementDataExecutionPreventionAvailable', 'HyperVRequirementSecondLevelAddressTranslation',
+    'HyperVRequirementVirtualizationFirmwareEnabled', 'HyperVRequirementVMMonitorModeExtensions'
+)
+$data = Get-ComputerInfo | Select-Object $attributes
+Out-JsonFile -Category "computer" -Data $data
 
 # Disk
-# $attributes = @('Model', 'Size', @{Name = 'Size GB'; Expression = {Convert-BytesToGB $_.Size}}, 'PNPDeviceID', 'Caption', 'Status')
-# $data = Get-CimInstance -ClassName Win32_DiskDrive | Select-Object $attributes
-# $disk = Out-MarkdownList -Category "Festplatte" -Data $data
-
-$attributes = @('MediaType', 'BusType', 'Model', @{Name = 'Size GB'; Expression = {Convert-BytesToGB $_.Size}}, 'HealthStatus')
-$data = Get-PhysicalDisk | Select-Object $attributes
-$disk = Out-MarkdownList -Category "Festplatte" -Data $data
+$attributes = @('MediaType', 'BusType', 'Model', @{Name = 'Size GB'; Expression = { Convert-BytesToGB $_.Size } }, 'HealthStatus')
+$data = Get-PhysicalDisk | Where-Object { $_.BusType -ne 'USB' } | Select-Object $attributes
+Out-JsonFile -Category "disk" -Data $data
 
 # Video Controller
-$attributes = @('Caption', 'PNPDeviceID', 'VideoProcessor', @{Name = 'AdapterRAM GB'; Expression = {Convert-BytesToGB $_.AdapterRAM}})
+$attributes = @('VideoProcessor', @{Name = 'AdapterRAM GB'; Expression = { Convert-BytesToGB $_.AdapterRAM } }, 'DeviceID', 'Status')
 $data = Get-CimInstance -ClassName Win32_VideoController | Select-Object $attributes
-$video = Out-MarkdownList -Category "Grafikkarte" -Data $data
+Out-JsonFile -Category "video_adapter" -Data $data
 
 # Network Adapter
-$attributes = @('Name', 'InterfaceDescription', 'MACAddress', 'Status', 'LinkSpeed', 'InstanceID', 'HardwareInterface', 'Virtual', 'VlanID')
+$attributes = @('Name', 'InstanceID', 'InterfaceAlias', 'InterfaceDescription', 'HardwareInterface',  
+    'DeviceID', 'MACAddress', 'LinkSpeed', 'Virtual', 'VlanID', 'Status')
 $data = Get-NetAdapter | Select-Object $attributes
-$net_adapter = Out-MarkdownList -Category "Network Adapter" -Data $data
-
-# IP
-$attributes = @('InterfaceAlias', 'NetAdapter', 'IPv4Address', 'IPv6Address', 'IPv6LinkLocalAddress', 'DHCPEnabled')
-$data = Get-NetIPConfiguration | Select-Object $attributes
-$ip = Out-MarkdownList -Category "IP" -Data $data
+Out-JsonFile -Category "network_adapter" -Data $data
 
 # DNS
-$attributes = @('InterfaceAlias', 'ServerAddresses')
-$data = Get-DnsClientServerAddress | Where-Object {$_.ServerAddresses -ne ""} | Select-Object $attributes
-$dns = Out-MarkdownList -Category "DNS" -Data $data
-
-
-$markdownContent = @"
-# $env:COMPUTERNAME
-$os
-$processor
-$memory
-$disk
-$video
-$net_adapter
-$ip
-$dns
-"@
-
-$markdownContent | Out-File .\data\device_info.md -Encoding utf8
+$attributes = @('InstanceID', 'InterfaceAlias', 'ServerAddresses')
+$data = Get-DnsClientServerAddress | Where-Object { $_.ServerAddresses -ne "" } | Select-Object $attributes
+Out-JsonFile -Category "dns" -Data $data
