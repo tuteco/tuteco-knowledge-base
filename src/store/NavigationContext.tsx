@@ -1,5 +1,5 @@
 import React, {createContext, ReactNode, useContext, useState} from "react";
-import {InformationCategoryType, LinkType, NavigationType, TopicAreaType} from "../data/datatypes.ts";
+import {InformationCategoryType, LinkType, NavigationType, TopicAreaType} from "../model/datatypes.ts";
 import StructureContext from "./StructureContext.tsx";
 
 type NavigationContextType = {

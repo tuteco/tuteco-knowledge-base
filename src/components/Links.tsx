@@ -1,16 +1,16 @@
-import {LinkType} from "../data/datatypes.ts";
+import {LinkType} from "../model/datatypes.ts";
 import Tile from "./UI/Tile.tsx";
 import ButtonWithIcon from "./UI/ButtonWithIcon.tsx";
 import {useContext} from "react";
 import StructureContext from "../store/StructureContext.tsx";
 import NavigationContext from "../store/NavigationContext.tsx";
 
-type SidebarPropsType = {
+type PropsType = {
     linksData: LinkType[],
     onClose: () => void
 }
 
-const Links = ({linksData, onClose}: SidebarPropsType) => {
+const Links = ({linksData, onClose}: PropsType) => {
     const structureCtx = useContext(StructureContext);
     const navCtx = useContext(NavigationContext);
 

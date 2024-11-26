@@ -1,5 +1,5 @@
 import React, {createContext, ReactNode} from "react";
-import {InformationCategoryType, TopicAreaType} from "../data/datatypes.ts";
+import {InformationCategoryType, TopicAreaType} from "../model/datatypes.ts";
 import {useQuery} from "@tanstack/react-query";
 import {getInformationCategories, getTopicAreas} from "../utils/fetch.ts";
 import {Icon} from "@iconify/react";

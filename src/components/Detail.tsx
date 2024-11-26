@@ -1,7 +1,8 @@
-import {EntityType} from "../data/datatypes.ts";
+import {EntityType} from "../model/datatypes.ts";
 import Links from "./Links.tsx";
 import Tile from "./UI/Tile.tsx";
 import {useState} from "react";
+import EntityProperty from "./EntityProperty.tsx";
 
 type DetailPropsType = {
     entityData: EntityType,
@@ -20,43 +21,21 @@ const Detail = ({entityData, onClose}: DetailPropsType) => {
     }
 
     return (
-        <div className='flex-1 h-full flex flex-col'>
+        <div className="flex-1 h-full flex flex-col">
             <Tile title={entityData.name} label={entityData.meta?.label} cssClass="flex-1"
                   onClose={onClose}>
-                <div className="w-full h-full grid grid-cols-2 text-md text-neutral-800 px-4">
-                    <div className="col-span-1">
+                <div className="w-full h-full grid grid-cols-2 text-md text-neutral-800">
+                    <div className="col-span-1 px-4">
                         <ul>
-                            {entityData.properties.map((property) => {
-                                return (
-                                    <li key={property.key} className="py-3">
-                                        {property.value.map((item, index) => {
-                                            return typeof item === "object"
-                                                ? <a key={`${property.key}-${index}`}
-                                                     className="w-full block underline"
-                                                     href={item.link} target="_blank">{item.value}</a>
-                                                : <p key={`${property.key}-${index}`}
-                                                     className="w-full block">{item}</p>;
-                                        })}
-                                        <label className="text-sm text-neutral-400">{property.key}</label>
-                                    </li>
-                                );
-                            })}
+                            {entityData.properties.map((property) =>
+                                <EntityProperty key={property.key} property={property}/>)}
                         </ul>
                     </div>
-                    <div className="col-span-1">
+                    <div className="col-span-1 px-4">
                         <ul>
                             {entityData.notes &&
-                                <li key={entityData.notes.key} className="py-3">
-                                    {entityData.notes.value.map((item, index) => {
-                                        return typeof item === "object"
-                                            ? <a key={`${entityData.notes!.key}-${index}`}
-                                                 className="w-full block underline"
-                                                 href={item.link} target="_blank">{item.value}</a>
-                                            : <p key={`${entityData.notes!.key}-${index}`}
-                                                 className="w-full block">{item}</p>;
-                                    })}
-                                    <label className="text-sm text-neutral-400">{entityData.notes.key}</label>
-                                </li>}
+                                <EntityProperty key={entityData.notes.key} property={entityData.notes}/>
+                            }
                         </ul>
                     </div>
                 </div>
