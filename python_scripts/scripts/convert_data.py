@@ -18,14 +18,19 @@ class LinkDirection(str, Enum):
     outgoing = "outgoing"
 
 
-class LinkProperty(BaseModel):
-    value: str
-    link: str
+class ExtendedProperty(BaseModel):
+    title: str
+    content: str
+
+
+class PropertyValue(BaseModel):
+    type: str
+    value: str | ExtendedProperty
 
 
 class Property(BaseModel):
     key: str
-    value: List[str | LinkProperty]
+    value: List[PropertyValue]
 
 
 class MetaLink(BaseModel):
@@ -225,11 +230,11 @@ def set_properties(h1_tag) -> List[Property]:
                 if a:
                     if (t := a[0].get_text().lstrip()) and (h := a[0]["href"]):
                         properties_dictionary.setdefault(text[0], [])
-                        properties_dictionary[text[0]].append({"value": t, "link": h})
+                        properties_dictionary[text[0]].append(PropertyValue(type='link', value=ExtendedProperty(title=t, content=h)))
                 elif len(text) == 2:
                     if t := text[1].lstrip():
                         properties_dictionary.setdefault(text[0], [])
-                        properties_dictionary[text[0]].append(t)
+                        properties_dictionary[text[0]].append(PropertyValue(type='string', value=t))
 
     return [Property(key=k, value=v) for k, v in properties_dictionary.items()]
 
@@ -262,9 +267,9 @@ def set_notes(h3_tag) -> Property | None:
         # p or ul allowed
         if sibling.name == "ul":
             for li in sibling.find_all("li"):
-                value += li.get_text().splitlines()
+                value += [PropertyValue(type='string', value=line) for line in li.get_text().splitlines()]
         if sibling.name == "p":
-            value += sibling.get_text().splitlines()
+            value += [PropertyValue(type='string', value=line) for line in sibling.get_text().splitlines()]
 
     if value:
         return Property(key=h3_tag.get_text(), value=value)

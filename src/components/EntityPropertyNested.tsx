@@ -1,10 +1,10 @@
 import Accordion from "./UI/Accordion.tsx";
 import AccordionItem from "./UI/AccordionItem.tsx";
-import {PropertyType, PropertyValueType} from "../model/datatypes.ts";
+import {ExtendedValueType, PropertyType, PropertyValueType} from "../model/datatypes.ts";
 import EntityProperty from "./EntityProperty.tsx";
 
 type PropsType = {
-    items: PropertyValueType[]
+    items: PropertyValueType[],
 }
 
 const EntityPropertyNested = ({items}: PropsType) => {
@@ -13,10 +13,10 @@ const EntityPropertyNested = ({items}: PropsType) => {
             {items.map((item, index) => (
                 <AccordionItem key={index}
                                index={index}
-                               title={item.title}
+                               title={(item.value as ExtendedValueType).title}
                                content={
                                    <ul>
-                                       {(item.content as PropertyType[]).map((property) => {
+                                       {((item.value as ExtendedValueType).content as PropertyType[]).map((property) => {
                                            return (
                                                <EntityProperty key={property.key} property={property}/>
                                            );

@@ -1,8 +1,8 @@
-import {PropertyValueType} from "../model/datatypes.ts";
+import {ExtendedValueType} from "../model/datatypes.ts";
 
 type PropsType = {
     key: string
-    item: PropertyValueType
+    item: ExtendedValueType
 }
 
 const EntityPropertyLink = ({key, item}: PropsType) => {

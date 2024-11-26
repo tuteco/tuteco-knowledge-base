@@ -1,12 +1,16 @@
-export type PropertyValueType = {
+export type ExtendedValueType = {
     title: string,
     content: string | PropertyType[]
 }
 
-export type PropertyType = {
+export type PropertyValueType = {
     type: string,
+    value: string | ExtendedValueType
+}
+
+export type PropertyType = {
     key: string,
-    value: string[] | PropertyValueType[],
+    value: PropertyValueType[],
 }
 
 export type LinkType = {
