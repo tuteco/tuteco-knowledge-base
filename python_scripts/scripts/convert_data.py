@@ -232,24 +232,29 @@ def set_properties_recursive(ul) -> List[Property]:
             li = li.find_next_sibling('li')
             continue
 
+        key = text[0]
+        value = None
+        if len(text) > 1:
+            value = ':'.join(text[1:])
+
         # check nested list
         if ul_nested := li.find('ul'):
-            if len(text) > 1:
-                properties_dictionary.setdefault(text[0], [])
-                properties_dictionary[text[0]].append(
-                    PropertyValue(type='nested', value=ExtendedValue(title=text[1].split('\n')[0].lstrip(),
+            if value:
+                properties_dictionary.setdefault(key, [])
+                properties_dictionary[key].append(
+                    PropertyValue(type='nested', value=ExtendedValue(title=value.split('\n')[0].lstrip(),
                                                                      content=set_properties_recursive(ul_nested))))
         else:
             # check a-href
             if a := li.find("a"):
                 if (title := a.get_text().lstrip()) and (link := a["href"]):
-                    properties_dictionary.setdefault(text[0], [])
-                    properties_dictionary[text[0]].append(
+                    properties_dictionary.setdefault(key, [])
+                    properties_dictionary[key].append(
                         PropertyValue(type='link', value=ExtendedValue(title=title, content=link)))
-            elif len(text) == 2 and (value := text[1].lstrip()):
+            elif value:
                 # text value
-                properties_dictionary.setdefault(text[0], [])
-                properties_dictionary[text[0]].append(PropertyValue(type='string', value=value))
+                properties_dictionary.setdefault(key, [])
+                properties_dictionary[key].append(PropertyValue(type='string', value=value.lstrip()))
 
         li = li.find_next_sibling('li')
 

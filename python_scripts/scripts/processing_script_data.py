@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 import json
 import os.path
-from typing import List, Dict
+from typing import Dict, List
 
 from core import Logger, clear_directory, list_directory_files
 
@@ -11,8 +11,13 @@ H1 = {
     'computer': {'fields': ['CsName'], 'template': '# {0}\n'}
 }
 
+H2 = {
+    'computer': {'fields': ['CsName'], 'template': '\n- [{0}]()'}
+}
+
 OBJECT_TITLE = {
-    'disk': {'fields': ['BusType', 'MediaType', 'Size GB'], 'template': '{0}-{1}({2})'},
+    'processor': {'fields': ['Name'], 'template': '{0}'},
+    'disk': {'fields': ['BusType', 'MediaType', 'Size GB'], 'template': '{0}-{1}({2}GB)'},
     'network_adapter': {'fields': ['Name', 'MacAddress'], 'template': '{0}({1})'},
     'video_adapter': {'fields': ['VideoProcessor'], 'template': '{0}'},
     'ms_store': {'fields': ['Name', 'Version'], 'template': '{0}({1})'},
@@ -42,8 +47,11 @@ def main():
         h1 = []
 
         # processing device hardware and software information
-        processing_device('hardware', source_directory, target_hardware_directory, device, h1)
-        processing_device('software', source_directory, target_software_directory, device, h1)
+        # link
+        h2 = ['\n## Software']
+        processing_device('hardware', source_directory, target_hardware_directory, device, h1, h2)
+        h2[0] = '\n## Hardware'
+        processing_device('software', source_directory, target_software_directory, device, h1, h2)
 
 
 def prepare_target_directory(base_path: str, path: str, clear: bool) -> str:
@@ -59,12 +67,14 @@ def prepare_target_directory(base_path: str, path: str, clear: bool) -> str:
     return target_directory
 
 
-def processing_device(information_type: str, source_path: str, target_path: str, device: str, h1: List[str]) -> None:
+def processing_device(information_type: str, source_path: str, target_path: str, device: str, h1: List[str], h2: List[str]) -> None:
     # list json files
     source_directory = os.path.join(source_path, device, information_type)
     files = list_directory_files(source_directory, file_pattern=r"^.*\.json$")
 
     markdown_lines = []
+    processors: List[Dict[str, any]] | Dict[str, any] = []
+    network_adapters: List[Dict[str, any]] | Dict[str, any] = []
     for file in files:
         logger.log.info(f'read file: {file}')
         try:
@@ -76,15 +86,67 @@ def processing_device(information_type: str, source_path: str, target_path: str,
             # build device name
             if H1.get(filename) and isinstance(json_data, dict):
                 h1.append(H1[filename]['template'].format(
-                    *[json_data.get(f, '') for f in H1[filename]['fields']]))
+                    *[json_data.get(f) or '' for f in H1[filename]['fields']]))
 
-            if filename != 'computer':
+            # build link
+            if H2.get(filename) and isinstance(json_data, dict):
+                h2.append(H2[filename]['template'].format(
+                    *[json_data.get(f) or '' for f in H2[filename]['fields']]))
+
+            # special logic
+            if filename == 'computer':
+                # save processor information
+                processors = json_data.get('CsProcessors') or []
+                if not isinstance(processors, list):
+                    processors = [processors]
+                # delete processor from computer
+                del json_data['CsProcessors']
+
+                # save logical network adapter information
+                network_adapters = json_data.get('CsNetworkAdapters') or []
+                if not isinstance(network_adapters, list):
+                    network_adapters = [network_adapters]
+                # delete logical network adapter information from computer
+                del json_data['CsNetworkAdapters']
+            else:
+                if filename == 'dns':
+                    if not isinstance(json_data, list):
+                        json_data = [json_data]
+                    # add DNS information to logical network adapter
+                    for i, item in enumerate(json_data):
+                        if not item.get('InterfaceAlias'):
+                            continue
+                        adapter_index = next(
+                            (i for i, network_adapter in enumerate(network_adapters) if
+                             network_adapter.get('ConnectionID') == item['InterfaceAlias']), None)
+                        if adapter_index is not None:
+                            network_adapters[adapter_index]['DNSServerAddresses'] = item.get('ServerAddresses')
+                    # dont process dns file
+                    continue
+
+                if filename == 'network_adapter':
+                    if not isinstance(json_data, list):
+                        json_data = [json_data]
+                    # add logical network adapter information to physical network adapter
+                    for i, item in enumerate(json_data):
+                        adapter_name = item.get('InterfaceAlias') or item.get('Name')
+                        adapter = next((item for item in network_adapters if item.get('ConnectionID') == adapter_name),
+                                       None)
+                        if adapter:
+                            for prop in ['DHCPEnabled', 'DHCPServer', 'IPAddresses', 'DNSServerAddresses']:
+                                json_data[i][prop] = adapter.get(prop)
+
+                # save as nested object
                 json_data = {filename.title(): json_data}
 
             if not isinstance(json_data, list):
                 json_data = [json_data]
 
             markdown_lines.extend(json_to_markdown(json_data, OBJECT_TITLE.get(filename)))
+
+            # add processor information
+            if filename == 'computer':
+                markdown_lines.extend(json_to_markdown([{'Processors': processors}], OBJECT_TITLE.get('processor')))
         except Exception as e:
             logger.log.warning(e)
 
@@ -92,11 +154,11 @@ def processing_device(information_type: str, source_path: str, target_path: str,
     logger.log.info(f'write file: {markdown_file_name}')
 
     with open(markdown_file_name, "w", encoding="utf-8") as markdown_file:
-        markdown_file.write("\n".join(h1 + markdown_lines))
+        markdown_file.write("\n".join(h1 + markdown_lines + h2))
 
 
-def json_to_markdown(json_data: List[Dict[str, any]], object_title: Dict[str, str | List[str]] | None, indent=0) -> \
-        List[str]:
+def json_to_markdown(
+        json_data: List[Dict[str, any]], object_title: Dict[str, str | List[str]] | None, indent=0) -> List[str]:
     markdown_lines = []
     indent_space = '    ' * indent
 
@@ -108,12 +170,7 @@ def json_to_markdown(json_data: List[Dict[str, any]], object_title: Dict[str, st
             for i, value_item in enumerate(value, start=1):
                 if isinstance(value_item, dict):
                     # build object title
-                    title = str(i)
-                    if object_title:
-                        title = object_title['template'].format(
-                            *[value_item.get(f, '') for f in object_title['fields']])
-                        if not title:
-                            title = str(i)
+                    title = build_object_title(i, object_title, value_item)
 
                     markdown_lines.append(f"{indent_space}- __{key}:__ {title}")
                     markdown_lines.extend(json_to_markdown([value_item], object_title, indent + 1))
@@ -121,6 +178,18 @@ def json_to_markdown(json_data: List[Dict[str, any]], object_title: Dict[str, st
                     markdown_lines.append(f"{indent_space}- __{key}:__ {value_item}")
 
     return markdown_lines
+
+
+def build_object_title(id: int, object_title: Dict[str, str | List[str]] | None, value: Dict[str, any]) -> str:
+    # build object title
+    title = ''
+    if object_title:
+        title = object_title['template'].format(*[value.get(f) or '' for f in object_title['fields']])
+
+    if not title:
+        title = str(id)
+
+    return title
 
 
 if __name__ == "__main__":
