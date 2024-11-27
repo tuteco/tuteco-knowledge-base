@@ -17,7 +17,7 @@ H2 = {
 
 OBJECT_TITLE = {
     'processor': {'fields': ['Name'], 'template': '{0}'},
-    'disk': {'fields': ['BusType', 'MediaType', 'Size GB'], 'template': '{0}-{1}({2}GB)'},
+    'disk': {'fields': ['BusType', 'MediaType', 'Size GB'], 'template': '{0}-{1}({2} GB)'},
     'network_adapter': {'fields': ['Name', 'MacAddress'], 'template': '{0}({1})'},
     'video_adapter': {'fields': ['VideoProcessor'], 'template': '{0}'},
     'ms_store': {'fields': ['Name', 'Version'], 'template': '{0}({1})'},

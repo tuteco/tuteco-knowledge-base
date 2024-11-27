@@ -24,18 +24,21 @@ const Detail = ({entityData, onClose}: DetailPropsType) => {
         <div className="flex-1 h-full flex flex-col">
             <Tile title={entityData.name} label={entityData.meta?.label} cssClass="flex-1"
                   onClose={onClose}>
-                <div className="w-full h-full grid grid-cols-2 text-md text-neutral-800">
+                <div
+                    className={`w-full h-full grid ${entityData.notes ? 'grid-cols-2' : 'grid-cols-1'} text-md text-neutral-800`}>
                     <div className="col-span-1 px-4">
                         <ul>
                             {entityData.properties.map((property, index) =>
                                 <EntityProperty key={index} property={property}/>)}
                         </ul>
                     </div>
-                    <div className="col-span-1 px-4">
-                        <ul>
-                            {entityData.notes && <EntityProperty property={entityData.notes}/>}
-                        </ul>
-                    </div>
+                    {entityData.notes &&
+                        <div className="col-span-1 px-4">
+                            <ul>
+                                <EntityProperty property={entityData.notes}/>
+                            </ul>
+                        </div>
+                    }
                 </div>
                 {!showLinks &&
                     <div className="mt-6 text-right text-sm text-primary-300">
