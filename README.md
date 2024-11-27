@@ -30,11 +30,20 @@ The project was tested with Node.js v18.19.1 and podman v4.9.3.
 
 - create the following tree structure in the project root
   - input
+    - script_data
+  - output
+    - script_data
   - data
     - data 
     - structure 
   - logs
   - tmp
+- copy customer data collected by powershell script in input/script_data/$CUSTOMER_ID
+- convert collected data to markdown files
+    ```shell
+    ./infrastructure/processing_script_data.sh -c $CUSTOMER_ID -i ./input/script_data/ -o ./output/script_data/
+    ```
+- copy converted markdown files from output/script_data/$CUSTOMER_ID to DEVONthink
 - copy project template folder from DEVONthink in input/$PROJECT_TEMPLATE_FOLDER
 - convert project template data to topics and categories definitions
     ```shell

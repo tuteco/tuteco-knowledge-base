@@ -1,6 +1,6 @@
 import {useContext, useEffect, useState} from "react";
 import Detail from "./Detail.tsx";
-import {EntityType} from "../data/datatypes.ts";
+import {EntityType} from "../model/datatypes.ts";
 import Tile from "./UI/Tile.tsx";
 import {useQuery} from "@tanstack/react-query";
 import {getCategoryData} from "../utils/fetch.ts";
