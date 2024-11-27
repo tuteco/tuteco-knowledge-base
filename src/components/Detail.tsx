@@ -27,29 +27,26 @@ const Detail = ({entityData, onClose}: DetailPropsType) => {
                 <div className="w-full h-full grid grid-cols-2 text-md text-neutral-800">
                     <div className="col-span-1 px-4">
                         <ul>
-                            {entityData.properties.map((property) =>
-                                <EntityProperty key={property.key} property={property}/>)}
+                            {entityData.properties.map((property, index) =>
+                                <EntityProperty key={index} property={property}/>)}
                         </ul>
                     </div>
                     <div className="col-span-1 px-4">
                         <ul>
-                            {entityData.notes &&
-                                <EntityProperty key={entityData.notes.key} property={entityData.notes}/>
-                            }
+                            {entityData.notes && <EntityProperty property={entityData.notes}/>}
                         </ul>
                     </div>
                 </div>
                 {!showLinks &&
                     <div className="mt-6 text-right text-sm text-primary-300">
                         <button onClick={handleShowLinks}
-                                className="p-4 hover:text-neutral-700">Verknüpfungen
-                            einblenden...
+                                className="p-4 hover:text-neutral-700">
+                            Verknüpfungen einblenden...
                         </button>
                     </div>
                 }
             </Tile>
-            {entityData?.links && showLinks &&
-                <Links linksData={entityData.links} onClose={handleHideLinks}/>}
+            {entityData?.links && showLinks && <Links linksData={entityData.links} onClose={handleHideLinks}/>}
         </div>
     );
 };

@@ -15,8 +15,8 @@ const AccordionItem = ({index, title, content}: PropsType) => {
     };
 
     return (
-        <div key={index} className="bg-neutral-100 border-b border-neutral-200">
-            <button className="w-full text-left p-2" onClick={() => toggleAccordion(index)}>
+        <div className="border-b border-neutral-100">
+            <button className="w-full text-left py-2 pr-2" onClick={() => toggleAccordion(index)}>
                 <div className="flex justify-between items-center">
                     <span className="font-medium text-neutral-700">{title}</span>
                     <Icon icon="material-symbols-light:keyboard-arrow-down"

@@ -1,17 +1,15 @@
 import {ExtendedValueType} from "../model/datatypes.ts";
 
 type PropsType = {
-    key: string
-    item: ExtendedValueType
+    value: ExtendedValueType
 }
 
-const EntityPropertyLink = ({key, item}: PropsType) => {
+const EntityPropertyLink = ({value}: PropsType) => {
     return (
-        <a key={key}
-           className="w-full block underline"
-           href={item.content as string}
+        <a className="w-full block underline"
+           href={value.content as string}
            target="_blank">
-            {item.title}
+            {value.title}
         </a>
     );
 };

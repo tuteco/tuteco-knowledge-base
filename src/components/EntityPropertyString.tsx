@@ -1,12 +1,11 @@
 type PropsType = {
-    key: string
-    item: string
+    value: string
 }
 
-const EntityPropertyString = ({key, item}: PropsType) => {
+const EntityPropertyString = ({value}: PropsType) => {
     return (
-        <p key={key} className="w-full block">
-            {item}
+        <p className="w-full block">
+            {value}
         </p>
     );
 };

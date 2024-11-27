@@ -9,14 +9,13 @@ type PropsType = {
 
 const EntityProperty = ({property}: PropsType) => {
     return (
-        <li key={property.key} className="py-3">
+        <li className="py-3">
             {property.value.map((item, index) => {
                 return item.type === "nested"
-                    ? <EntityPropertyNested items={property.value}/>
-                    :
-                    item.type === "link"
-                        ? <EntityPropertyLink key={`${property.key}-${index}`} item={item.value as ExtendedValueType}/>
-                        : <EntityPropertyString key={`${property.key}-${index}`} item={item.value as string}/>;
+                    ? <EntityPropertyNested key={index} accordionItemIndex={index} value={item.value as ExtendedValueType}/>
+                    : item.type === "link"
+                        ? <EntityPropertyLink key={index} value={item.value as ExtendedValueType}/>
+                        : <EntityPropertyString key={index} value={item.value as string}/>;
             })}
             <label className="text-sm text-neutral-400">{property.key}</label>
         </li>

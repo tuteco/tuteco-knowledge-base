@@ -18,14 +18,14 @@ class LinkDirection(str, Enum):
     outgoing = "outgoing"
 
 
-class ExtendedProperty(BaseModel):
+class ExtendedValue(BaseModel):
     title: str
-    content: str
+    content: str | List['Property']
 
 
 class PropertyValue(BaseModel):
     type: str
-    value: str | ExtendedProperty
+    value: str | ExtendedValue
 
 
 class Property(BaseModel):
@@ -213,28 +213,45 @@ def check_allowed_tags(soup):
 
 
 def set_properties(h1_tag) -> List[Property]:
+    # only ul allowed
+    ul = h1_tag.find_next_sibling("ul")
+    if ul:
+        return set_properties_recursive(ul)
+
+    return []
+
+
+def set_properties_recursive(ul) -> List[Property]:
     properties_dictionary = {}
 
-    for sibling in h1_tag.find_next_siblings():
-        if sibling.name in ["h2", "h3"]:
-            break
-        # only ul allowed
-        if sibling.name == "ul":
-            for li in sibling.find_all("li"):
-                # text or a-href allowed
-                text = li.get_text().split(":")
-                if not text:
-                    continue
-                # check if a-href
-                a = li.find_all("a")
-                if a:
-                    if (t := a[0].get_text().lstrip()) and (h := a[0]["href"]):
-                        properties_dictionary.setdefault(text[0], [])
-                        properties_dictionary[text[0]].append(PropertyValue(type='link', value=ExtendedProperty(title=t, content=h)))
-                elif len(text) == 2:
-                    if t := text[1].lstrip():
-                        properties_dictionary.setdefault(text[0], [])
-                        properties_dictionary[text[0]].append(PropertyValue(type='string', value=t))
+    li = ul.find("li")
+    while li:
+        # get text key: value
+        text = li.get_text().split(":")
+        if not text:
+            li = li.find_next_sibling('li')
+            continue
+
+        # check nested list
+        if ul_nested := li.find('ul'):
+            if len(text) > 1:
+                properties_dictionary.setdefault(text[0], [])
+                properties_dictionary[text[0]].append(
+                    PropertyValue(type='nested', value=ExtendedValue(title=text[1].split('\n')[0].lstrip(),
+                                                                     content=set_properties_recursive(ul_nested))))
+        else:
+            # check a-href
+            if a := li.find("a"):
+                if (title := a.get_text().lstrip()) and (link := a["href"]):
+                    properties_dictionary.setdefault(text[0], [])
+                    properties_dictionary[text[0]].append(
+                        PropertyValue(type='link', value=ExtendedValue(title=title, content=link)))
+            elif len(text) == 2 and (value := text[1].lstrip()):
+                # text value
+                properties_dictionary.setdefault(text[0], [])
+                properties_dictionary[text[0]].append(PropertyValue(type='string', value=value))
+
+        li = li.find_next_sibling('li')
 
     return [Property(key=k, value=v) for k, v in properties_dictionary.items()]
 
@@ -249,13 +266,11 @@ def set_outgoing_links(h2_tag, meta_o_links) -> List[Link]:
         if sibling.name == "ul":
             for li in sibling.find_all("li"):
                 # only a-href allowed
-                a = li.find_all("a")
-                if a:
-                    if (t := a[0].get_text().lstrip()) and (h := a[0]["href"]):
-                        link_name = os.path.splitext(os.path.basename(h))[0]
-                        if l := meta_o_links.get(link_name):
-                            links.append(
-                                Link(**l.model_dump(), direction=LinkDirection.outgoing, type=h2_tag.get_text()))
+                if (a := li.find("a")) and a["href"]:
+                    link_name = os.path.splitext(os.path.basename(a["href"]))[0]
+                    if link := meta_o_links.get(link_name):
+                        links.append(
+                            Link(**link.model_dump(), direction=LinkDirection.outgoing, type=h2_tag.get_text()))
 
     return links
 
