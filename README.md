@@ -44,12 +44,12 @@ The project was tested with Node.js v18.19.1 and podman v4.9.3.
     ./infrastructure/processing_script_data.sh -c $CUSTOMER_ID -i ./input/script_data/ -o ./output/script_data/
     ```
 - copy converted markdown files from output/script_data/$CUSTOMER_ID to DEVONthink
-- copy project template folder from DEVONthink in input/$PROJECT_TEMPLATE_FOLDER
-- convert project template data to topics and categories definitions
+- (ONCE by changes) copy project template folder from DEVONthink in input/$PROJECT_TEMPLATE_FOLDER
+- (ONCE by changes) convert project template data to topics and categories definitions
     ```shell
     ./infrastructure/convert_structure.sh -i ./input/$PROJECT_TEMPLATE_FOLDER/ -o ./data/structure/
     ```
-- import script ./apple_scripts/ExportMarkdownDocumentation.applescript to DEVONthink scripts
+- (ONCE by changes) import script ./apple_scripts/ExportMarkdownDocumentation.applescript to DEVONthink scripts
 - use this script to export markdown input data from DEVONthink in input/$MARKDOWN_DATA_FOLDER
 - convert markdown input data to entities per category
     ```shell
