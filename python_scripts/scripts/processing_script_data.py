@@ -78,7 +78,7 @@ def processing_device(information_type: str, source_path: str, target_path: str,
     for file in files:
         logger.log.info(f'read file: {file}')
         try:
-            with open(file, "r", encoding="utf-8") as json_file:
+            with open(file, "r", encoding="utf-16") as json_file:
                 json_data = json.load(json_file)
 
             filename = os.path.splitext(os.path.basename(file))[0]
@@ -153,7 +153,7 @@ def processing_device(information_type: str, source_path: str, target_path: str,
     markdown_file_name = os.path.join(target_path, f'{device}.md')
     logger.log.info(f'write file: {markdown_file_name}')
 
-    with open(markdown_file_name, "w", encoding="utf-8") as markdown_file:
+    with open(markdown_file_name, "w", encoding="utf-16") as markdown_file:
         markdown_file.write("\n".join(h1 + markdown_lines + h2))
 
 
