@@ -38,25 +38,41 @@ The project was tested with Node.js v18.19.1 and podman v4.9.3.
     - structure 
   - logs
   - tmp
+
+- set customer identifier you used when collecting the customer data with helper scripts
+    ```shell
+    export CUSTOMER_ID=
+    ```
 - copy customer data collected by powershell script in input/script_data/$CUSTOMER_ID
 - convert collected data to markdown files
     ```shell
     ./infrastructure/processing_script_data.sh -c $CUSTOMER_ID -i ./input/script_data/ -o ./output/script_data/
     ```
 - copy converted markdown files from output/script_data/$CUSTOMER_ID to DEVONthink
+
+- (ONCE by changes) set project template folder name as it is in DEVONthink
+    ```shell
+    export PROJECT_TEMPLATE_FOLDER=
+    ```
 - (ONCE by changes) copy project template folder from DEVONthink in input/$PROJECT_TEMPLATE_FOLDER
 - (ONCE by changes) convert project template data to topics and categories definitions
     ```shell
     ./infrastructure/convert_structure.sh -i ./input/$PROJECT_TEMPLATE_FOLDER/ -o ./data/structure/
     ```
 - (ONCE by changes) import script ./apple_scripts/ExportMarkdownDocumentation.applescript to DEVONthink scripts
-- use this script to export markdown input data from DEVONthink in input/$MARKDOWN_DATA_FOLDER
-- convert markdown input data to entities per category
+
+- set customer markdown data folder name as it is in DEVONthink
     ```shell
-    ./infrastructure/convert_data.sh -i ./input/$MARKDOWN_DATA_FOLDER/ -o ./data/data/ -c ./data/structure/category.json
+    export CUSTOMER_MARKDOWN_DATA_FOLDER=
     ```
-- start web server
+- use apple script to export customer markdown data from DEVONthink to input/$CUSTOMER_MARKDOWN_DATA_FOLDER
+- convert customer markdown data to entities per category
     ```shell
+    ./infrastructure/convert_data.sh -i ./input/$CUSTOMER_MARKDOWN_DATA_FOLDER/ -o ./data/data/ -c ./data/structure/category.json
+    ```
+- set exposed port and start web server
+    ```shell
+    export PORT=
     ./infrastructure/run_nginx.sh -p $PORT -n ./infrastructure/nginx.conf -a ./dist/ -d ./data/ -t ./tmp/ -l ./logs/
     ```
 - UI is now available
